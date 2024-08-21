@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geolokasi dengan Peta (OpenStreetMap)</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 24px;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+        #location {
+            padding: 15px;
+            background-color: #34495e;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+            text-align: left;
+            width: 90%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .location-name {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 14px;
+            text-transform: uppercase;
+            color: #ecdbff;
+            margin-bottom: 10px;
+        }
+        #getLocationBtn {
+            background-color: #e74c3c;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        #getLocationBtn:hover {
+            background-color: #c0392b;
+        }
+        #map {
+            height: 400px;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.5);
+        }
+        footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #95a5a6;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Geolokasi Saya</h1>
+    <button id="getLocationBtn">Dapatkan Lokasi Saya</button>
+    <div id="location">
+        <p class="location-name"><strong>Nama Lokasi:</strong> Memuat...</p>
+        <p class="location-name"><strong>Desa/Kelurahan:</strong> Memuat...</p>
+        <p class="location-name"><strong>RT/RW atau Nomor:</strong> Memuat...</p>
+        <p class="location-name"><strong>Kecamatan:</strong> Memuat...</p>
+        <p class="location-name"><strong>Kabupaten:</strong> Memuat...</p>
+    </div>
+    <div id="map"></div>
+    <footer>2024 | arul dev | all rights reserved</footer>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        let map, marker;
+
+        function initMap(lat, lng) {
+            const userLocation = [lat, lng];
+            map = L.map('map').setView(userLocation, 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            marker = L.marker(userLocation).addTo(map)
+                .bindPopup("Lokasi Anda")
+                .openPopup();
+        }
+
+        function showLocation(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            initMap(latitude, longitude);
+            getLocationDetails(latitude, longitude);
+        }
+
+        function getLocationDetails(lat, lng) {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const address = data.address || {};
+                    document.querySelector('.location-name:nth-child(1)').innerHTML = `<strong>Nama Lokasi:</strong> ${(data.display_name || "Nama lokasi tidak tersedia.").toUpperCase()}`;
+                    document.querySelector('.location-name:nth-child(2)').innerHTML = `<strong>Desa/Kelurahan:</strong> ${(address.village || address.suburb || address.hamlet || "Tidak tersedia").toUpperCase()}`;
+                    document.querySelector('.location-name:nth-child(3)').innerHTML = `<strong>RT/RW atau Nomor:</strong> ${(address.road || address.neighbourhood || "Tidak tersedia").toUpperCase()}`;
+                    document.querySelector('.location-name:nth-child(4)').innerHTML = `<strong>Kecamatan:</strong> ${(address.town || address.city_district || "Tidak tersedia").toUpperCase()}`;
+                    document.querySelector('.location-name:nth-child(5)').innerHTML = `<strong>Kabupaten:</strong> ${(address.city || address.county || "Tidak tersedia").toUpperCase()}`;
+                })
+                .catch(error => {
+                    document.querySelector('.location-name:nth-child(1)').innerHTML = "<strong>Nama Lokasi:</strong> Gagal memuat nama lokasi.";
+                    document.querySelector('.location-name:nth-child(2)').innerHTML = "<strong>Desa/Kelurahan:</strong> Gagal memuat.";
+                    document.querySelector('.location-name:nth-child(3)').innerHTML = "<strong>RT/RW atau Nomor:</strong> Gagal memuat.";
+                    document.querySelector('.location-name:nth-child(4)').innerHTML = "<strong>Kecamatan:</strong> Gagal memuat.";
+                    document.querySelector('.location-name:nth-child(5)').innerHTML = "<strong>Kabupaten:</strong> Gagal memuat.";
+                });
+        }
+
+        function showError(error) {
+            let message = '';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    message = "Pengguna menolak permintaan geolokasi.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message = "Informasi lokasi tidak tersedia.";
+                    break;
+                case error.TIMEOUT:
+                    message = "Permintaan untuk mendapatkan lokasi pengguna melebihi waktu.";
+                    break;
+                case error.UNKNOWN_ERROR:
+                    message = "Terjadi kesalahan yang tidak diketahui.";
+                    break;
+            }
+            document.getElementById('location').innerHTML = `<p>Error: ${message}</p>`;
+        }
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showLocation, showError);
+            } else {
+                document.getElementById('location').innerHTML = "<p>Geolokasi tidak didukung oleh browser ini.</p>";
+            }
+        }
+
+        document.getElementById('getLocationBtn').addEventListener('click', getLocation);
+    </script>
+
+</body>
+</html>
