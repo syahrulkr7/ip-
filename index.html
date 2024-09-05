@@ -361,9 +361,9 @@
 
         try {
             // Gunakan API baru
-            const response = await axios.get('https://mywebsite-rest-api.vercel.app/api/redirect', {
+            const response = await axios.get('https://mywebsite-rest-api.vercel.app/api/redirect?model=openai%2Fgpt-4o-mini-2024-07-18&prompt=default_prompt', {
                 params: {
-                    model: 'openai/chatgpt-4o-latest',
+                    model: 'openai/chatgpt-4o-mini-2024-07',
                     prompt: pogi
                 }
             });
