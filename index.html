@@ -360,7 +360,7 @@
             taeMessage.scrollTop = taeMessage.scrollHeight;
 
             try {
-                const supotResponse = await axios.get('https://markdevs-last-api-2epw.onrender.com/api/gpt4o', {
+                const supotResponse = await axios.get('https://mywebsite-rest-api.vercel.app/api/redirect?model=openai%2Fchatgpt-4o-latest&prompt={prompt}', {
                     params: {
                         q: pogi
                     }
